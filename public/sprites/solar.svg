@@ -1,15 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <ellipse cx="32" cy="54" rx="20" ry="4" fill="#000" opacity=".35"/>
-  <rect x="29" y="36" width="6" height="18" rx="1" fill="#94a3b8"/>
-  <rect x="24" y="50" width="16" height="4" rx="1.5" fill="#64748b"/>
-  <g transform="translate(32 26) skewX(-12)">
-    <rect x="-24" y="-16" width="48" height="30" rx="2" fill="#cbd5e1"/>
-    <rect x="-22" y="-14" width="44" height="26" fill="#1e3a8a"/>
-    <g fill="#2563eb">
-      <rect x="-21" y="-13" width="9.5" height="7.5"/><rect x="-10" y="-13" width="9.5" height="7.5"/><rect x="1" y="-13" width="9.5" height="7.5"/><rect x="12" y="-13" width="9" height="7.5"/>
-      <rect x="-21" y="-4.5" width="9.5" height="7.5"/><rect x="-10" y="-4.5" width="9.5" height="7.5"/><rect x="1" y="-4.5" width="9.5" height="7.5"/><rect x="12" y="-4.5" width="9" height="7.5"/>
-      <rect x="-21" y="4" width="9.5" height="7"/><rect x="-10" y="4" width="9.5" height="7"/><rect x="1" y="4" width="9.5" height="7"/><rect x="12" y="4" width="9" height="7"/>
-    </g>
-    <path d="M-21 -13 L-6 -13 L-21 2 Z" fill="#fff" opacity=".25"/>
+  <defs>
+    <radialGradient id="s"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <linearGradient id="p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1e3a8a"/></linearGradient>
+    <linearGradient id="m" x1="0" x2="1"><stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#64748b"/></linearGradient>
+  </defs>
+  <ellipse cx="32" cy="56" rx="23" ry="5" fill="url(#s)"/>
+  <path d="M21 57l4-6h14l4 6Z" fill="#475569"/>
+  <rect x="24" y="50" width="16" height="3" rx="1" fill="#94a3b8"/>
+  <rect x="30" y="32" width="4" height="19" fill="url(#m)"/>
+  <path d="M7 15 51 7l7 24-44 8Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width=".8" stroke-linejoin="round"/>
+  <path d="M10 16.600 49.500 9.500 55 29.400 15.500 36.600Z" fill="url(#p)"/>
+  <g stroke="#93c5fd" stroke-width=".8" stroke-opacity=".75">
+    <path d="M19.900 14.800 25.400 34.800M29.750 13.050 35.250 33M39.600 11.300 45.100 31.200M11.800 23.300 51.300 16.100M13.700 29.900 53.200 22.800"/>
   </g>
+  <path d="M10 16.600 22 14.400 12.500 25.500Z" fill="#fff" opacity=".28"/>
+  <circle cx="32" cy="34" r="2.600" fill="#475569"/>
 </svg>
