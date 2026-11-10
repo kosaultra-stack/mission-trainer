@@ -1,5 +1,8 @@
+import type { ChangePulse } from '../changes';
 import { Icon } from '../icons';
 import { GAUGE_LOOK, isDanger, type GaugeId } from '../look';
+import { useAnimatedNumber } from '../useAnimatedNumber';
+import { ChangeChip } from './ChangeChip';
 
 function DeltaChip({ delta }: { delta: number }) {
   const tone = delta > 0 ? 'bg-emerald-400/15 text-emerald-300' : delta < 0 ? 'bg-rose-400/15 text-rose-300' : 'bg-slate-700/60 text-slate-400';
@@ -13,18 +16,31 @@ function DeltaChip({ delta }: { delta: number }) {
   );
 }
 
+interface Props {
+  id: GaugeId;
+  value: number;
+  /** Прогноз рушія на наступний сол. */
+  delta?: number;
+  /** Зміни після останньої дії — щоб на мить показати, що сталося. */
+  pulse?: ChangePulse | null;
+}
+
 /** Шкала ресурсу 0..100 із прогнозом рушія на наступний сол. */
-export function Gauge({ id, value, delta }: { id: GaugeId; value: number; delta?: number }) {
+export function Gauge({ id, value, delta, pulse }: Props) {
   const look = GAUGE_LOOK[id];
+  const shown = useAnimatedNumber(value);
+  const change = pulse?.values[id] ?? 0;
   const danger = isDanger(id, value);
   const pct = Math.max(0, Math.min(100, value));
 
   return (
     <div
-      className={`rounded-xl border p-2.5 transition-colors duration-500 ${
+      className={`relative rounded-xl border p-2.5 transition-colors duration-500 ${
         danger ? 'anim-danger border-rose-500/60 bg-rose-500/10' : 'border-white/5 bg-slate-950/40'
       }`}
     >
+      {/* Значок зміни сидить на куті картки, як сповіщення, і нічого не закриває */}
+      {pulse && change !== 0 && <ChangeChip key={pulse.id} id={id} value={change} className="-top-2 right-2" />}
       <div className="flex items-center gap-2">
         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${look.chip}`}>
           <Icon name={look.icon} className="h-4 w-4" />
@@ -33,7 +49,7 @@ export function Gauge({ id, value, delta }: { id: GaugeId; value: number; delta?
         {danger && <Icon name="alert" className="h-4 w-4 shrink-0 text-rose-400" />}
       </div>
       <div className="mt-1.5 flex items-center gap-2">
-        <span className={`min-w-8 text-xl font-bold leading-none tabular-nums ${danger ? 'text-rose-200' : 'text-slate-50'}`}>{value}</span>
+        <span className={`min-w-8 text-xl font-bold leading-none tabular-nums ${danger ? 'text-rose-200' : 'text-slate-50'}`}>{shown}</span>
         <div
           className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-800"
           role="meter"

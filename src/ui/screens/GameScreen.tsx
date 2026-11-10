@@ -35,7 +35,7 @@ function rememberVisit() {
 }
 
 export function GameScreen({ onHome }: { onHome: () => void }) {
-  const { state, banner, notice, dispatch, load, restart } = useGame();
+  const { state, banner, pulse, notice, dispatch, load, restart } = useGame();
   const [building, setBuilding] = useState<ModuleType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(firstVisit);
@@ -123,7 +123,7 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
       <div className="flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[220px_minmax(0,1fr)_280px] xl:grid-cols-[250px_minmax(0,1fr)_320px]">
         <aside className="scroll-thin contents lg:flex lg:min-h-0 lg:flex-col lg:gap-3 lg:overflow-y-auto">
           <div className="order-1 lg:order-none">
-            <ResourcesPanel state={state} forecast={forecast} />
+            <ResourcesPanel state={state} forecast={forecast} pulse={pulse} />
           </div>
           <div className="order-4 lg:order-none">
             <Advisor advice={advice} />
@@ -156,7 +156,7 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
 
       {/* Нижня панель дій для телефона */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-white/10 bg-slate-950/90 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur lg:hidden">
-        <PartsChip parts={state.parts} />
+        <PartsChip parts={state.parts} pulse={pulse} />
         <NextSolButton isLast={state.sol >= state.maxSol} disabled={!canAct} onClick={nextSol} className="flex flex-1" />
       </div>
 
