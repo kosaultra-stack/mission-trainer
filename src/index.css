@@ -1,21 +1,111 @@
 @import "tailwindcss";
 
-/* Зоряне небо: кілька шарів дрібних точок */
-.stars {
-  background-image:
-    radial-gradient(1px 1px at 20px 30px, #fff9, transparent),
-    radial-gradient(1px 1px at 120px 80px, #fff7, transparent),
-    radial-gradient(1.5px 1.5px at 200px 150px, #fffc, transparent),
-    radial-gradient(1px 1px at 300px 40px, #fff8, transparent),
-    radial-gradient(1px 1px at 380px 190px, #fff6, transparent),
-    radial-gradient(1.5px 1.5px at 60px 220px, #fffa, transparent);
-  background-size: 420px 260px;
+@layer base {
+  html { color-scheme: dark; }
+  body { background: #020617; -webkit-tap-highlight-color: transparent; }
+  button { cursor: pointer; }
+  button:disabled, button[aria-disabled="true"] { cursor: not-allowed; }
+  :focus-visible { outline: 2px solid #fb923c; outline-offset: 2px; }
 }
 
-@keyframes twinkle { 50% { opacity: .55; } }
-.twinkle { animation: twinkle 6s ease-in-out infinite; }
+@layer components {
+  /* Зоряне небо: два шари точок із різним кроком, щоб повтор не впадав в око */
+  .stars {
+    background-image:
+    radial-gradient(1px 1px at 114px 12px, #ffffff88, transparent),
+    radial-gradient(1px 1px at 142px 377px, #fef3c766, transparent),
+    radial-gradient(1px 1px at 32px 15px, #ffffff88, transparent),
+    radial-gradient(1px 1px at 517px 308px, #fef3c788, transparent),
+    radial-gradient(1px 1px at 225px 229px, #ffffff66, transparent),
+    radial-gradient(1px 1px at 432px 174px, #ffffff88, transparent),
+    radial-gradient(1px 1px at 344px 52px, #ffffffcc, transparent),
+    radial-gradient(1px 1px at 367px 176px, #fef3c766, transparent),
+    radial-gradient(1.4px 1.4px at 549px 63px, #dbeafe66, transparent),
+    radial-gradient(1px 1px at 370px 295px, #ffffff66, transparent),
+    radial-gradient(1px 1px at 233px 395px, #ffffff66, transparent),
+    radial-gradient(1px 1px at 103px 194px, #dbeafecc, transparent),
+    radial-gradient(1px 1px at 166px 189px, #dbeafe88, transparent),
+    radial-gradient(1px 1px at 73px 311px, #ffffff88, transparent),
+    radial-gradient(1px 1px at 473px 194px, #dbeafe88, transparent),
+    radial-gradient(1px 1px at 57px 117px, #fef3c7aa, transparent),
+    radial-gradient(1px 1px at 274px 33px, #ffffffaa, transparent),
+    radial-gradient(1.4px 1.4px at 511px 202px, #dbeafe88, transparent),
+    radial-gradient(1px 1px at 142px 126px, #fef3c7cc, transparent),
+    radial-gradient(1px 1px at 370px 112px, #ffffffcc, transparent),
+    radial-gradient(1px 1px at 48px 56px, #fef3c788, transparent),
+    radial-gradient(1.4px 1.4px at 65px 197px, #dbeafecc, transparent),
+    radial-gradient(1px 1px at 11px 348px, #dbeafeaa, transparent),
+    radial-gradient(1.4px 1.4px at 114px 150px, #fef3c788, transparent),
+    radial-gradient(1px 1px at 3px 369px, #ffffff88, transparent),
+    radial-gradient(1px 1px at 305px 327px, #dbeafe88, transparent);
+    background-size: 560px 420px;
+  }
+  .stars-big {
+    background-image:
+    radial-gradient(2.2px 2.2px at 780px 165px, #ffffffff, transparent),
+    radial-gradient(1.8px 1.8px at 613px 331px, #ffffffcc, transparent),
+    radial-gradient(1.4px 1.4px at 371px 314px, #ffffffcc, transparent),
+    radial-gradient(1.4px 1.4px at 899px 580px, #fef3c7cc, transparent),
+    radial-gradient(2.2px 2.2px at 835px 70px, #ffffffcc, transparent),
+    radial-gradient(2.2px 2.2px at 675px 486px, #dbeafecc, transparent),
+    radial-gradient(1.8px 1.8px at 540px 621px, #ffffffcc, transparent),
+    radial-gradient(1.8px 1.8px at 730px 319px, #dbeafeff, transparent),
+    radial-gradient(1.8px 1.8px at 448px 529px, #ffffffcc, transparent);
+    background-size: 900px 640px;
+  }
+
+  /* Панель у стилі пульта керування */
+  .panel {
+    border-radius: 1rem;
+    border: 1px solid rgb(148 163 184 / 0.16);
+    background: linear-gradient(180deg, rgb(15 23 42 / 0.86), rgb(15 23 42 / 0.66));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 12px 32px -14px rgb(0 0 0 / 0.7);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Мапа: на телефоні — на всю ширину, на великому екрані вписується у вільне місце */
+  .map-box { width: 100%; aspect-ratio: 800 / 750; }
+  @media (min-width: 1024px) {
+    .map-fit { container-type: size; }
+    .map-box { width: min(100cqw, calc(100cqh * 800 / 750)); }
+  }
+
+  .scroll-thin { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+
+  .anim-twinkle { animation: twinkle 7s ease-in-out infinite; }
+  .anim-pop { animation: pop-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  .anim-dust { animation: dust 0.6s ease-out both; }
+  .anim-banner { animation: banner 2.2s ease-in-out both; }
+  .anim-rise { animation: rise 0.25s ease-out both; }
+  .anim-fade { animation: fade 0.2s ease-out both; }
+  .anim-led { animation: led 2.4s ease-in-out infinite; }
+  .anim-danger { animation: danger 1.6s ease-in-out infinite; }
+  .anim-float { animation: float 7s ease-in-out infinite; }
+}
+
+@keyframes twinkle { 50% { opacity: 0.55; } }
+@keyframes pop-in {
+  0% { transform: translateY(-22%) scale(0.55); opacity: 0; }
+  60% { transform: translateY(0) scale(1.08); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes dust { 0% { transform: scale(0.4); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes banner {
+  0% { opacity: 0; transform: scale(0.92); }
+  12% { opacity: 1; transform: none; }
+  72% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes led { 50% { opacity: 0.45; } }
+@keyframes danger { 0%, 100% { box-shadow: 0 0 0 0 rgb(244 63 94 / 0); } 50% { box-shadow: 0 0 0 4px rgb(244 63 94 / 0.22); } }
+@keyframes float { 50% { transform: translateY(-8px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .twinkle, .animate-pulse { animation: none; }
-  * { transition-duration: 0s !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,26 +1,50 @@
 import { useState } from 'react';
-import { reduce } from '../sim';
 import type { Action, GameState } from '../shared/types';
+import { engine } from './engine';
+
+export interface SolBannerInfo {
+  id: number;
+  sol: number;
+  isNight: boolean;
+  phaseChanged: boolean;
+}
 
 /** Тримає стан гри. Змінює його тільки через reduce() з рушія. */
-export function useGame(initial: GameState) {
-  const [state, setState] = useState(initial);
+export function useGame() {
+  const [state, setState] = useState<GameState>(() => engine.newGame(1));
+  const [banner, setBanner] = useState<SolBannerInfo | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const dispatch = (action: Action) => {
+  /** Застосовує дію. Повертає новий стан або null, якщо рушій дію відхилив. */
+  const dispatch = (action: Action): GameState | null => {
+    let next: GameState;
     try {
-      setState(reduce(state, action));
-      setNotice(null);
+      next = engine.reduce(state, action);
     } catch {
-      setNotice('Рушій ще не готовий — дію не застосовано. Перемикайте моки вгорі.');
+      setNotice('Цю дію зараз виконати не можна.');
+      return null;
     }
+    if (next.sol !== state.sol) {
+      setBanner((prev) => ({
+        id: (prev?.id ?? 0) + 1,
+        sol: next.sol,
+        isNight: next.isNight,
+        phaseChanged: next.isNight !== state.isNight,
+      }));
+    }
+    setState(next);
+    setNotice(null);
+    return next;
   };
 
   /** Завантажити готовий стан (мок або нова гра). */
   const load = (next: GameState) => {
     setState(next);
+    setBanner(null);
     setNotice(null);
   };
 
-  return { state, load, dispatch, notice };
+  const restart = () => load(engine.newGame(Date.now() % 2147483647));
+
+  return { state, banner, notice, dispatch, load, restart };
 }
