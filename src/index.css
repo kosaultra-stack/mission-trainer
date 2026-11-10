@@ -81,6 +81,7 @@
   .anim-led { animation: led 2.4s ease-in-out infinite; }
   .anim-danger { animation: danger 1.6s ease-in-out infinite; }
   .anim-float { animation: float 7s ease-in-out infinite; }
+  .anim-change { animation: change-pop 2.4s ease-out both; }
 }
 
 @keyframes twinkle { 50% { opacity: 0.55; } }
@@ -100,6 +101,14 @@
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes led { 50% { opacity: 0.45; } }
 @keyframes danger { 0%, 100% { box-shadow: 0 0 0 0 rgb(244 63 94 / 0); } 50% { box-shadow: 0 0 0 4px rgb(244 63 94 / 0.22); } }
+@keyframes change-pop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.5); }
+  10% { opacity: 1; transform: translateY(0) scale(1.2); }
+  18% { transform: scale(1); }
+  80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes hold { 0% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes float { 50% { transform: translateY(-8px); } }
 
 @media (prefers-reduced-motion: reduce) {
@@ -107,5 +116,11 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  /* Важливі повідомлення не ховаємо: показуємо без руху й прибираємо, коли мине час */
+  .anim-change, .anim-banner {
+    animation-name: hold;
+    animation-duration: 2.2s !important;
+    animation-timing-function: steps(1, end);
   }
 }

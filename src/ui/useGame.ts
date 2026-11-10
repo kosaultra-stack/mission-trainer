@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Action, GameState } from '../shared/types';
+import { diffState, hasChanges, type ChangePulse } from './changes';
 import { engine } from './engine';
 
 export interface SolBannerInfo {
@@ -13,6 +14,7 @@ export interface SolBannerInfo {
 export function useGame() {
   const [state, setState] = useState<GameState>(() => engine.newGame(1));
   const [banner, setBanner] = useState<SolBannerInfo | null>(null);
+  const [pulse, setPulse] = useState<ChangePulse | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   /** Застосовує дію. Повертає новий стан або null, якщо рушій дію відхилив. */
@@ -32,6 +34,8 @@ export function useGame() {
         phaseChanged: next.isNight !== state.isNight,
       }));
     }
+    const values = diffState(state, next);
+    if (hasChanges(values)) setPulse((prev) => ({ id: (prev?.id ?? 0) + 1, values }));
     setState(next);
     setNotice(null);
     return next;
@@ -41,10 +45,11 @@ export function useGame() {
   const load = (next: GameState) => {
     setState(next);
     setBanner(null);
+    setPulse(null);
     setNotice(null);
   };
 
   const restart = () => load(engine.newGame(Date.now() % 2147483647));
 
-  return { state, banner, notice, dispatch, load, restart };
+  return { state, banner, pulse, notice, dispatch, load, restart };
 }
