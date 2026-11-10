@@ -1,6 +1,7 @@
 import { forecast } from '../sim';
 import type { GameState, ResourceId } from '../shared/types';
 import { RESOURCE_LOOK } from './look';
+import { MissionProgress } from './MissionProgress';
 import { ResourceBar } from './ResourceBar';
 
 const IDS: ResourceId[] = ['power', 'life', 'food'];
@@ -32,7 +33,10 @@ export function Hud({ state, onNextSol }: { state: GameState; onNextSol: () => v
           Наступний сол ▶
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4">
+        <MissionProgress sol={state.sol} maxSol={state.maxSol} isNight={state.isNight} />
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {IDS.map((id) => (
           <ResourceBar
             key={id}

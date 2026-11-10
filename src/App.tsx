@@ -15,8 +15,10 @@ export default function App() {
   const [selected, setSelected] = useState<ModuleType | null>(null);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#1e293b,_#020617_70%)] text-slate-100">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="stars pointer-events-none fixed inset-0 opacity-40" aria-hidden />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_#1e293b99,_transparent_70%)]" aria-hidden />
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-lg font-bold tracking-tight">
             🌕 Mission Trainer <span className="font-normal text-slate-400">— місячна база</span>

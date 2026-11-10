@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <ellipse cx="32" cy="54" rx="20" ry="4" fill="#000" opacity=".35"/>
+  <rect x="29" y="36" width="6" height="18" rx="1" fill="#94a3b8"/>
+  <rect x="24" y="50" width="16" height="4" rx="1.5" fill="#64748b"/>
+  <g transform="translate(32 26) skewX(-12)">
+    <rect x="-24" y="-16" width="48" height="30" rx="2" fill="#cbd5e1"/>
+    <rect x="-22" y="-14" width="44" height="26" fill="#1e3a8a"/>
+    <g fill="#2563eb">
+      <rect x="-21" y="-13" width="9.5" height="7.5"/><rect x="-10" y="-13" width="9.5" height="7.5"/><rect x="1" y="-13" width="9.5" height="7.5"/><rect x="12" y="-13" width="9" height="7.5"/>
+      <rect x="-21" y="-4.5" width="9.5" height="7.5"/><rect x="-10" y="-4.5" width="9.5" height="7.5"/><rect x="1" y="-4.5" width="9.5" height="7.5"/><rect x="12" y="-4.5" width="9" height="7.5"/>
+      <rect x="-21" y="4" width="9.5" height="7"/><rect x="-10" y="4" width="9.5" height="7"/><rect x="1" y="4" width="9.5" height="7"/><rect x="12" y="4" width="9" height="7"/>
+    </g>
+    <path d="M-21 -13 L-6 -13 L-21 2 Z" fill="#fff" opacity=".25"/>
+  </g>
+</svg>

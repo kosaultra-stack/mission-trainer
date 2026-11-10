@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+/* Зоряне небо: кілька шарів дрібних точок */
+.stars {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, #fff9, transparent),
+    radial-gradient(1px 1px at 120px 80px, #fff7, transparent),
+    radial-gradient(1.5px 1.5px at 200px 150px, #fffc, transparent),
+    radial-gradient(1px 1px at 300px 40px, #fff8, transparent),
+    radial-gradient(1px 1px at 380px 190px, #fff6, transparent),
+    radial-gradient(1.5px 1.5px at 60px 220px, #fffa, transparent);
+  background-size: 420px 260px;
+}
+
+@keyframes twinkle { 50% { opacity: .55; } }
+.twinkle { animation: twinkle 6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .twinkle, .animate-pulse { animation: none; }
+  * { transition-duration: 0s !important; }
+}
