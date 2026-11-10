@@ -1,6 +1,6 @@
 import { MODULES } from '../content/modules';
 import type { ModuleType } from '../shared/types';
-import { MODULE_LOOK } from './look';
+import { spriteUrl } from './look';
 
 const TYPES = Object.keys(MODULES) as ModuleType[];
 
@@ -26,7 +26,7 @@ export function BuildPanel({ selected, onSelect }: Props) {
                   active ? 'border-orange-400 bg-orange-500/15' : 'border-slate-700 bg-slate-800/60 hover:border-slate-500'
                 }`}
               >
-                <span className="text-xl" aria-hidden>{MODULE_LOOK[t].icon}</span>
+                <img src={spriteUrl(t)} alt="" className="h-9 w-9 shrink-0" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-slate-100">{info.name}</span>
                   <span className="hidden text-xs text-slate-400 lg:block">{info.description}</span>
