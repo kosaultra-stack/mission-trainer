@@ -2,39 +2,39 @@ import type { ModuleType } from '../shared/types';
 
 export interface ModuleInfo {
   name: string;
-  cost: number; // в запчастях (parts)
+  cost: number; // у запчастинах (parts)
   description: string;
 }
 
 export const MODULES: Record<ModuleType, ModuleInfo> = {
   solar: {
-    name: 'Солнечная панель',
+    name: 'Сонячна панель',
     cost: 2,
-    description: 'Даёт энергию днём. Лунной ночью (около 14 земных суток) не работает.',
+    description: 'Дає енергію вдень. Місячної ночі (близько 14 земних діб) не працює.',
   },
   battery: {
-    name: 'Аккумулятор',
+    name: 'Акумулятор',
     cost: 3,
-    description: 'Запасает энергию днём и отдаёт её ночью.',
+    description: 'Запасає енергію вдень і віддає її вночі.',
   },
   habitat: {
-    name: 'Жилой модуль',
+    name: 'Житловий модуль',
     cost: 4,
-    description: 'Дом для экипажа. Потребляет энергию и жизнеобеспечение.',
+    description: 'Дім для екіпажу. Споживає енергію та життєзабезпечення.',
   },
   greenhouse: {
     name: 'Оранжерея',
     cost: 3,
-    description: 'Выращивает еду. Нужны свет и энергия.',
+    description: 'Вирощує їжу. Потрібні світло й енергія.',
   },
   recycler: {
-    name: 'Система переработки',
+    name: 'Система переробки',
     cost: 3,
-    description: 'Очищает воду и воздух, поддерживает жизнеобеспечение.',
+    description: 'Очищує воду й повітря, підтримує життєзабезпечення.',
   },
   shield: {
-    name: 'Радиационный щит',
+    name: 'Радіаційний щит',
     cost: 4,
-    description: 'Защищает базу от космической радиации и солнечных вспышек.',
+    description: 'Захищає базу від космічної радіації та сонячних спалахів.',
   },
 };

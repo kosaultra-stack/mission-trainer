@@ -1,8 +1,8 @@
 import type { Action, GameState, ResourceId } from '../shared/types';
 
-/** Создаёт новую игру. seed — для детерминированной случайности. */
+/** Створює нову гру. seed — для детермінованої випадковості. */
 export function newGame(seed: number = 1): GameState {
-  void seed; // TODO(sim): использовать seed для ГПСЧ
+  void seed; // TODO(sim): використати seed для ГПВЧ
   return {
     sol: 1,
     maxSol: 30,
@@ -13,18 +13,18 @@ export function newGame(seed: number = 1): GameState {
     modules: [],
     pendingEvent: null,
     status: 'playing',
-    log: ['Сол 1: база развёрнута.'],
+    log: ['Сол 1: базу розгорнуто.'],
   };
 }
 
-/** Чистая функция: применяет действие к состоянию и возвращает новое состояние. */
+/** Чиста функція: застосовує дію до стану й повертає новий стан. */
 export function reduce(state: GameState, action: Action): GameState {
   void state;
   void action;
   throw new Error('not implemented');
 }
 
-/** Прогноз изменения ресурсов за следующий сол (дельты). */
+/** Прогноз зміни ресурсів за наступний сол (дельти). */
 export function forecast(state: GameState): Record<ResourceId, number> {
   void state;
   return { power: 0, life: 0, food: 0 };

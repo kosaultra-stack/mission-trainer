@@ -8,7 +8,7 @@ export interface GameState {
   resources: Record<ResourceId, number>;   // 0..100
   radiation: number;                       // 0..100
   parts: number;
-  modules: PlacedModule[];                 // сетка 8x6: x 0..7, y 0..5
+  modules: PlacedModule[];                 // сітка 8x6: x 0..7, y 0..5
   pendingEvent: GameEvent | null;
   status: 'playing' | 'won' | 'lost';
   lostReason?: string;
