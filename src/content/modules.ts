@@ -1,4 +1,5 @@
 import type { ModuleType } from '../shared/types';
+import { BALANCE } from './balance';
 
 export interface ModuleInfo {
   name: string;
@@ -36,5 +37,20 @@ export const MODULES: Record<ModuleType, ModuleInfo> = {
     name: 'Радіаційний щит',
     cost: 4,
     description: 'Захищає базу від космічної радіації та сонячних спалахів.',
+  },
+  reactor: {
+    name: 'Ядерний реактор',
+    cost: 8,
+    description: 'Дає енергію і вдень, і вночі, але додає радіації. Найкраще працює в парі зі щитом.',
+  },
+  printer: {
+    name: '3D-принтер',
+    cost: 4,
+    description: 'Щосола друкує запчастину з місячного ґрунту. Споживає енергію.',
+  },
+  hub: {
+    name: 'Енерговузол',
+    cost: 3,
+    description: `Модулі зверху, знизу, ліворуч і праворуч від нього споживають на ${BALANCE.hubSaving} енергії менше.`,
   },
 };

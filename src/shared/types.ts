@@ -1,5 +1,7 @@
 export type ResourceId = 'power' | 'life' | 'food';
-export type ModuleType = 'solar' | 'battery' | 'habitat' | 'greenhouse' | 'recycler' | 'shield';
+export type ModuleType =
+  | 'solar' | 'battery' | 'habitat' | 'greenhouse' | 'recycler' | 'shield'
+  | 'reactor' | 'printer' | 'hub';
 export interface PlacedModule { id: string; type: ModuleType; x: number; y: number; on: boolean; }
 export interface EventChoice { id: string; label: string; hint: string; }
 export interface GameEvent { id: string; title: string; text: string; choices: EventChoice[]; factId?: string; }
@@ -14,6 +16,7 @@ export interface GameState {
   lostReason?: string;
   log: string[];
   rng?: number;                            // стан ГПВЧ рушія (mulberry32)
+  level?: number;                          // номер місії (1..3); без поля — перша
 }
 export type Action =
   | { type: 'build'; module: ModuleType; x: number; y: number }

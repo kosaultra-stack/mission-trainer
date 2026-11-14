@@ -1,7 +1,7 @@
-import { BALANCE } from '../content/balance';
+import { BALANCE, levelRules } from '../content/balance';
 import { MODULES } from '../content/modules';
 import type { GameState, ModuleType } from '../shared/types';
-import { forecast, newGame, reduce } from './index';
+import { forecast, newGame, reduce, solDelta } from './index';
 
 /**
  * Прості боти для перевірки балансу. Грають лише через reduce/forecast, як справжній гравець.
@@ -10,7 +10,16 @@ import { forecast, newGame, reduce } from './index';
 
 export type Strategy = (state: GameState) => GameState;
 
+/** Модуль і ділянка, де його ставити. */
+type Spot = [type: ModuleType, x: number, y: number];
+
 const count = (state: GameState, type: ModuleType) => state.modules.filter((m) => m.type === type).length;
+
+/** Скільки ще солів триватиме темрява, рахуючи цей. Удень — 0. */
+function nightLeft(state: GameState): number {
+  const night = levelRules(state.level).nights.find(([from, to]) => state.sol >= from && state.sol <= to);
+  return night ? night[1] - state.sol + 1 : 0;
+}
 
 /** Будує модуль на першій вільній ділянці, якщо вистачає запчастин. */
 function tryBuild(state: GameState, module: ModuleType): GameState {
@@ -36,10 +45,49 @@ function buildByPlan(state: GameState, plan: [ModuleType, number][]): GameState 
   return current;
 }
 
+/** Будує за кресленням: модулі на конкретних ділянках, по черзі. Поки на черговий не вистачає — чекає. */
+function buildBySpots(state: GameState, spots: Spot[]): GameState {
+  let current = state;
+  for (const [module, x, y] of spots) {
+    if (current.modules.some((m) => m.x === x && m.y === y)) continue;
+    const built = reduce(current, { type: 'build', module, x, y });
+    if (built === current) return current;
+    current = built;
+  }
+  return current;
+}
+
 function setOn(state: GameState, type: ModuleType, on: boolean): GameState {
   let current = state;
   for (const m of state.modules) {
     if (m.type === type && m.on !== on) current = reduce(current, { type: 'toggle', moduleId: m.id });
+  }
+  return current;
+}
+
+const SWITCHABLE = ['solar', 'battery', 'greenhouse', 'recycler', 'shield', 'reactor', 'printer', 'hub'] as const;
+const allOn = (state: GameState) => SWITCHABLE.reduce((s, type) => setOn(s, type, true), state);
+
+/**
+ * Економія: якщо заряду не вистачить на найближчі `left` солів, вимикає те, без чого можна прожити.
+ * Спершу принтер, потім щит, оранжерею й переробку — але лише коли запасу вистачає.
+ */
+function conserve(state: GameState, left: number): GameState {
+  const reserve = 10;
+  const enough = (s: GameState) => s.resources.power + forecast(s).power * left > reserve;
+  let current = state;
+  if (!enough(current)) current = setOn(current, 'printer', false);
+  if (!enough(current)) {
+    const off = setOn(current, 'shield', false);
+    if (off.radiation + solDelta(off).radiation * (left + 2) < 90) current = off;
+  }
+  if (!enough(current)) {
+    const off = setOn(current, 'greenhouse', false);
+    if (off.resources.food + solDelta(off).food * (left + 2) > reserve) current = off;
+  }
+  if (!enough(current)) {
+    const off = setOn(current, 'recycler', false);
+    if (off.resources.life + solDelta(off).life * (left + 2) > reserve) current = off;
   }
   return current;
 }
@@ -51,29 +99,42 @@ export const idle: Strategy = (state) => state;
 export const noBatteries: Strategy = (state) =>
   state.isNight ? state : buildByPlan(state, [['greenhouse', 1], ['recycler', 1], ['solar', 6]]);
 
-/** в) Розумна: до ночі — оранжерея, переробка, друга панель, акумулятори й щит; уночі вимикає зайве. */
+/** в) Розумна, лише старими модулями: оранжерея, переробка, панелі, акумулятори й щит; уночі вимикає зайве. */
 export const sensible: Strategy = (state) => {
-  if (!state.isNight) {
-    const all = (['solar', 'battery', 'greenhouse', 'recycler', 'shield'] as const).reduce((s, type) => setOn(s, type, true), state);
-    return buildByPlan(all, [
-      ['greenhouse', 1],
-      ['recycler', 1],
-      ['solar', 2],
-      ['battery', 2],
-      ['shield', 1],
-      ['battery', 3],
-      ['solar', 3],
-    ]);
-  }
-  // Уночі: якщо заряду не вистачить до світанку, вимикаємо те, без чого можна прожити.
-  const left = BALANCE.nightTo - state.sol + 1;
-  const reserve = 10;
-  let current = (['greenhouse', 'recycler', 'shield'] as const).reduce((s, type) => setOn(s, type, true), state);
-  const enough = (s: GameState) => s.resources.power + forecast(s).power * left > reserve;
-  if (!enough(current) && current.radiation + BALANCE.perSol.radiation * (left + 2) < 90) current = setOn(current, 'shield', false);
-  if (!enough(current) && current.resources.food + BALANCE.perSol.food * (left + 2) > reserve) current = setOn(current, 'greenhouse', false);
-  if (!enough(current) && current.resources.life + BALANCE.perSol.life * (left + 2) > reserve) current = setOn(current, 'recycler', false);
-  return current;
+  if (state.isNight) return conserve(allOn(state), nightLeft(state));
+  return buildByPlan(allOn(state), [
+    ['greenhouse', 1],
+    ['recycler', 1],
+    ['solar', 2],
+    ['battery', 2],
+    ['shield', 1],
+    ['battery', 3],
+    ['solar', 3],
+  ]);
+};
+
+/**
+ * Креслення бази довкола енерговузлів. Стартові модулі: житловий (3,2) і панель (4,2).
+ * Вузол A (3,3) обслуговує житловий модуль, оранжерею, переробку й щит; вузол B (5,3) — принтер та акумулятори.
+ */
+const SPOT = {
+  hubA: ['hub', 3, 3], greenhouse: ['greenhouse', 2, 3], recycler: ['recycler', 4, 3], shield: ['shield', 3, 4],
+  hubB: ['hub', 5, 3], printer: ['printer', 5, 2], battery1: ['battery', 6, 3], battery2: ['battery', 5, 4],
+  hubC: ['hub', 2, 4], shield2: ['shield', 1, 4], battery3: ['battery', 2, 5],
+  solar2: ['solar', 0, 0], solar3: ['solar', 1, 0], solar4: ['solar', 2, 0], solar5: ['solar', 3, 0], solar6: ['solar', 4, 0],
+  reactor: ['reactor', 7, 5], reactor2: ['reactor', 6, 5],
+} satisfies Record<string, Spot>;
+
+const EXPERT_PLANS: Record<number, Spot[]> = {
+  1: [SPOT.greenhouse, SPOT.recycler, SPOT.hubA, SPOT.solar2, SPOT.printer, SPOT.shield, SPOT.battery1, SPOT.battery2, SPOT.hubB, SPOT.solar3],
+  2: [SPOT.greenhouse, SPOT.recycler, SPOT.hubA, SPOT.solar2, SPOT.solar3, SPOT.printer, SPOT.shield, SPOT.solar4, SPOT.battery1, SPOT.hubB, SPOT.battery2, SPOT.solar5],
+  3: [SPOT.greenhouse, SPOT.recycler, SPOT.hubA, SPOT.shield, SPOT.solar2, SPOT.printer, SPOT.battery1, SPOT.hubB, SPOT.battery2, SPOT.shield2, SPOT.hubC, SPOT.reactor, SPOT.solar3],
+};
+
+/** г) Досвідчена: користується новими модулями — енерговузлами, 3D-принтером і реактором. */
+export const expert: Strategy = (state) => {
+  const built = buildBySpots(allOn(state), EXPERT_PLANS[state.level ?? 1] ?? EXPERT_PLANS[1]);
+  return conserve(built, state.isNight ? nightLeft(state) : 2);
 };
 
 export interface Outcome {
@@ -84,9 +145,9 @@ export interface Outcome {
 }
 
 /** Грає одну місію до кінця. */
-export function play(seed: number, strategy: Strategy): Outcome {
-  let state = newGame(seed);
-  for (let step = 0; step < 500 && state.status === 'playing'; step++) {
+export function play(seed: number, strategy: Strategy, level: number = 1): Outcome {
+  let state = newGame(seed, level);
+  for (let step = 0; step < 1000 && state.status === 'playing'; step++) {
     if (state.pendingEvent) {
       state = reduce(state, { type: 'choose', choiceId: state.pendingEvent.choices[0].id });
       continue;

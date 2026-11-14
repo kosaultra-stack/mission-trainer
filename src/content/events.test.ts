@@ -11,7 +11,7 @@ const rich: GameState = {
   resources: { power: 50, life: 50, food: 50 },
   radiation: 50,
   parts: 10,
-  modules: (['habitat', 'solar', 'battery', 'greenhouse', 'recycler', 'shield'] as const).map((type, i) => ({ id: `m${i + 1}`, type, x: i, y: 0, on: true })),
+  modules: (['habitat', 'solar', 'battery', 'greenhouse', 'recycler', 'shield', 'reactor', 'printer', 'hub'] as const).map((type, i) => ({ id: `m${i + 1}`, type, x: i, y: 0, on: true })),
   pendingEvent: null,
   status: 'playing',
   log: [],
@@ -32,13 +32,13 @@ function hasPrice(before: GameState, after: GameState): boolean {
 }
 
 describe('події', () => {
-  it('їх вісім, з унікальними id', () => {
-    expect(EVENTS).toHaveLength(8);
-    expect(new Set(EVENTS.map((def) => def.event.id)).size).toBe(8);
+  it('їх десять, з унікальними id', () => {
+    expect(EVENTS).toHaveLength(10);
+    expect(new Set(EVENTS.map((def) => def.event.id)).size).toBe(10);
   });
 
   it('є всі обов’язкові', () => {
-    for (const id of ['solar-flare', 'supply-drop', 'micrometeorite', 'air-leak', 'sick-crew', 'cold-battery']) {
+    for (const id of ['solar-flare', 'supply-drop', 'micrometeorite', 'air-leak', 'sick-crew', 'cold-battery', 'reactor-heat', 'printer-jam']) {
       expect(findEvent(id)).toBeDefined();
     }
   });
@@ -84,6 +84,15 @@ describe('події', () => {
     expect(findEvent('moon-dust')!.canHappen(rich)).toBe(false);
     expect(findEvent('moon-dust')!.canHappen({ ...rich, isNight: false })).toBe(true);
     expect(findEvent('solar-flare')!.canHappen({ ...rich, sol: 4 })).toBe(false);
+  });
+
+  it('події реактора й принтера трапляються лише там, де ці модулі працюють', () => {
+    const bare = { ...rich, modules: rich.modules.filter((m) => m.type !== 'reactor' && m.type !== 'printer') };
+    expect(findEvent('reactor-heat')!.canHappen(rich)).toBe(true);
+    expect(findEvent('reactor-heat')!.canHappen(bare)).toBe(false);
+    expect(findEvent('printer-jam')!.canHappen(rich)).toBe(true);
+    expect(findEvent('printer-jam')!.canHappen(bare)).toBe(false);
+    expect(findEvent('printer-jam')!.effects.stop(rich).modules.find((m) => m.type === 'printer')?.on).toBe(false);
   });
 
   it('мікрометеорит без ремонту вимикає одну сонячну панель', () => {
