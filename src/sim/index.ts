@@ -1,5 +1,5 @@
-import { BALANCE, type Delta } from '../content/balance';
-import { applyDelta } from '../content/effects';
+import { BALANCE, isNightSol, levelRules, type Delta } from '../content/balance';
+import { applyDelta, nearActiveHub } from '../content/effects';
 import { EVENTS, findEvent } from '../content/events';
 import { MODULES } from '../content/modules';
 import type { Action, GameEvent, GameState, ResourceId } from '../shared/types';
@@ -17,9 +17,6 @@ const LOST_REASON = {
   radiation: 'Радіація сягнула смертельного рівня.',
 };
 
-/** Місячна ніч триває із сола nightFrom по сол nightTo включно. */
-export const isNightSol = (sol: number) => sol >= BALANCE.nightFrom && sol <= BALANCE.nightTo;
-
 const DELTA_KEYS = ['power', 'life', 'food', 'radiation', 'parts'] as const;
 
 /**
@@ -28,13 +25,19 @@ const DELTA_KEYS = ['power', 'life', 'food', 'radiation', 'parts'] as const;
  * День чи ніч береться зі state.isNight, тож прогноз на ніч — це той самий стан з isNight: true.
  */
 export function solDelta(state: GameState): Required<Delta> {
+  const rules = levelRules(state.level);
   const total: Required<Delta> = { power: 0, life: 0, food: 0, radiation: 0, parts: 0 };
-  const everySol: Delta = BALANCE.perSol;
-  for (const key of DELTA_KEYS) total[key] += everySol[key] ?? 0;
+  for (const key of DELTA_KEYS) total[key] += rules.perSol[key] ?? 0;
+
   for (const module of state.modules) {
     if (!module.on) continue;
     const effect: Delta = BALANCE.modules[module.type][state.isNight ? 'night' : 'day'];
     for (const key of DELTA_KEYS) total[key] += effect[key] ?? 0;
+    // Сонячна панель: скільки дає вдень — залежить від рівня (висоти Сонця).
+    if (module.type === 'solar' && !state.isNight) total.power += rules.solarPower;
+    // Енерговузол: сусідній модуль споживає менше (але не менше нуля).
+    const use = -(effect.power ?? 0);
+    if (use > 0 && nearActiveHub(state.modules, module)) total.power += Math.min(use, BALANCE.hubSaving);
   }
   return total;
 }
@@ -56,30 +59,42 @@ function withLossCheck(state: GameState): GameState {
   };
 }
 
-/** Кидає кубик: чи буде подія цього сола і яка саме. Повертає й новий стан ГПВЧ. */
+/** Кидає кубик: чи буде подія цього сола і яка саме (з урахуванням ваги подій на рівні). Повертає й новий стан ГПВЧ. */
 function rollEvent(state: GameState): { rng: number; event: GameEvent | null } {
+  const rules = levelRules(state.level);
   const chance = nextRandom(state.rng ?? 0);
-  if (chance.value >= BALANCE.events.chance) return { rng: chance.state, event: null };
+  if (chance.value >= rules.eventChance) return { rng: chance.state, event: null };
   const pick = nextRandom(chance.state);
   const possible = EVENTS.filter((def) => def.canHappen(state));
-  const chosen = possible[Math.floor(pick.value * possible.length)];
-  return { rng: pick.state, event: chosen ? chosen.event : null };
+  const weight = (id: string) => rules.eventWeights[id] ?? 1;
+  let ticket = pick.value * possible.reduce((sum, def) => sum + weight(def.event.id), 0);
+  for (const def of possible) {
+    ticket -= weight(def.event.id);
+    if (ticket < 0) return { rng: pick.state, event: def.event };
+  }
+  return { rng: pick.state, event: null };
 }
 
-/** Створює нову гру. Той самий seed і ті самі дії завжди дають ту саму гру. */
-export function newGame(seed: number = 1): GameState {
+/**
+ * Створює нову гру. Той самий seed і ті самі дії завжди дають ту саму гру.
+ * level — номер місії (див. src/content/levels.ts); невідомий номер — перша місія.
+ */
+export function newGame(seed: number = 1, level: number = 1): GameState {
+  const id = level in BALANCE.levels ? level : 1;
+  const rules = levelRules(id);
   return {
     sol: 1,
-    maxSol: BALANCE.maxSol,
-    isNight: isNightSol(1),
-    resources: { ...BALANCE.start.resources },
-    radiation: BALANCE.start.radiation,
-    parts: BALANCE.start.parts,
-    modules: BALANCE.start.modules.map((m) => ({ ...m })),
+    maxSol: rules.maxSol,
+    isNight: isNightSol(rules, 1),
+    resources: { ...rules.start.resources },
+    radiation: rules.start.radiation,
+    parts: rules.start.parts,
+    modules: rules.start.modules.map((m) => ({ ...m })),
     pendingEvent: null,
     status: 'playing',
     log: ['Сол 1: базу розгорнуто.'],
     rng: seed | 0,
+    level: id,
   };
 }
 
@@ -123,7 +138,7 @@ function nextSol(state: GameState): GameState {
     return { ...state, status: 'won', log: [...state.log, `Сол ${state.sol}: місію виконано!`] };
   }
   const sol = state.sol + 1;
-  const isNight = isNightSol(sol);
+  const isNight = isNightSol(levelRules(state.level), sol);
   const log = [...state.log];
   if (isNight && !state.isNight) log.push(`Сол ${sol}: настала місячна ніч.`);
   if (!isNight && state.isNight) log.push(`Сол ${sol}: світанок — Сонце повернулося.`);

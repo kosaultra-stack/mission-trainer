@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BALANCE } from '../content/balance';
+import { BALANCE, levelRules } from '../content/balance';
 import { EVENTS } from '../content/events';
 import { startState } from '../mocks/states';
 import type { Action, GameState, PlacedModule } from '../shared/types';
-import { forecast, isNightSol, newGame, reduce, solDelta } from './index';
-import { sensible } from './strategies';
+import { forecast, newGame, reduce, solDelta } from './index';
+import { expert, sensible, type Strategy } from './strategies';
 
 const NEXT: Action = { type: 'nextSol' };
 
@@ -16,18 +16,22 @@ const withModules = (...types: PlacedModule['type'][]): PlacedModule[] =>
 
 const flare = EVENTS.find((def) => def.event.id === 'solar-flare')!.event;
 
-/** Грає розумним ботом і збирає всі стани, через які пройшла гра. */
-function trace(seed: number): GameState[] {
-  const states = [newGame(seed)];
+/** Грає ботом і збирає всі стани, через які пройшла гра. */
+function trace(seed: number, level = 1, bot: Strategy = sensible): GameState[] {
+  const states = [newGame(seed, level)];
   let state = states[0];
-  for (let step = 0; step < 500 && state.status === 'playing'; step++) {
+  for (let step = 0; step < 1000 && state.status === 'playing'; step++) {
     state = state.pendingEvent
       ? reduce(state, { type: 'choose', choiceId: state.pendingEvent.choices[0].id })
-      : reduce(sensible(state), NEXT);
+      : reduce(bot(state), NEXT);
     states.push(state);
   }
   return states;
 }
+
+/** Номери солів, на яких з'явилася подія з таким id. */
+const eventSols = (states: GameState[], id: string) =>
+  states.filter((s, i) => s.pendingEvent?.id === id && !states[i - 1]?.pendingEvent).map((s) => s.sol);
 
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === 'object') {
@@ -102,7 +106,7 @@ describe('перемикання модулів', () => {
   it('вимкнений модуль нічого не дає й не споживає', () => {
     const s = calm({ modules: withModules('habitat', 'solar', 'greenhouse') });
     const off = reduce(s, { type: 'toggle', moduleId: 'm3' });
-    expect(solDelta(off).food).toBe(BALANCE.perSol.food);
+    expect(solDelta(off).food).toBe(levelRules(1).perSol.food);
     expect(solDelta(off).power).toBe(solDelta(s).power - BALANCE.modules.greenhouse.day.power);
   });
 });
@@ -135,7 +139,7 @@ describe('наступний сол', () => {
   });
 
   it('день — соли 1–14, ніч — 15–28, світанок — 29–30', () => {
-    expect([1, 14, 15, 28, 29, 30].map(isNightSol)).toEqual([false, false, true, true, false, false]);
+    for (const { sol, isNight } of trace(3)) expect(isNight, `сол ${sol}`).toBe(sol >= 15 && sol <= 28);
     const dusk = reduce(calm({ sol: 14 }), NEXT);
     expect(dusk.isNight).toBe(true);
     expect(dusk.log).toContain('Сол 15: настала місячна ніч.');
@@ -183,7 +187,7 @@ describe('події', () => {
       const states = trace(seed);
       expect(states[0].pendingEvent).toBeNull();
       for (const s of states) {
-        if (s.pendingEvent?.id === 'solar-flare') expect(s.sol).toBeGreaterThanOrEqual(BALANCE.events.flareFromSol);
+        if (s.pendingEvent?.id === 'solar-flare') expect(s.sol).toBeGreaterThanOrEqual(BALANCE.flareFromSol);
       }
     }
   });
@@ -205,7 +209,11 @@ describe('події', () => {
     }
     expect(sols / events).toBeGreaterThan(2.5);
     expect(sols / events).toBeLessThan(4.5);
-    expect(seen.size).toBe(EVENTS.length);
+    // події реактора й принтера трапляються лише там, де ці модулі збудовано
+    for (let seed = 1; seed <= 60; seed++) {
+      for (const state of trace(seed, 3, expert)) if (state.pendingEvent) seen.add(state.pendingEvent.id);
+    }
+    expect([...seen].sort()).toEqual(EVENTS.map((def) => def.event.id).sort());
   });
 });
 
@@ -241,24 +249,28 @@ describe('кінець гри', () => {
 });
 
 describe('прогноз', () => {
-  it('збігається з тим, що справді дає nextSol', () => {
+  it('збігається з тим, що справді дає nextSol, — на всіх рівнях', () => {
     let checked = 0;
-    for (let seed = 1; seed <= 20; seed++) {
-      const states = trace(seed);
-      for (let i = 1; i < states.length; i++) {
-        const before = states[i - 1];
-        const after = states[i];
-        if (after.sol === before.sol) continue; // це був вибір у події або фінал
-        // стратегія могла щось збудувати чи вимкнути перед nextSol — відтворюємо той самий стан
-        const prepared = sensible(before);
-        const predicted = forecast(prepared);
-        expect(after.resources.power - prepared.resources.power).toBe(predicted.power);
-        expect(after.resources.life - prepared.resources.life).toBe(predicted.life);
-        expect(after.resources.food - prepared.resources.food).toBe(predicted.food);
-        checked++;
+    for (const level of [1, 2, 3]) {
+      for (const bot of [sensible, expert]) {
+        for (let seed = 1; seed <= 10; seed++) {
+          const states = trace(seed, level, bot);
+          for (let i = 1; i < states.length; i++) {
+            const before = states[i - 1];
+            const after = states[i];
+            if (after.sol === before.sol) continue; // це був вибір у події або фінал
+            // бот міг щось збудувати чи вимкнути перед nextSol — відтворюємо той самий стан
+            const prepared = bot(before);
+            const predicted = forecast(prepared);
+            expect(after.resources.power - prepared.resources.power).toBe(predicted.power);
+            expect(after.resources.life - prepared.resources.life).toBe(predicted.life);
+            expect(after.resources.food - prepared.resources.food).toBe(predicted.food);
+            checked++;
+          }
+        }
       }
     }
-    expect(checked).toBeGreaterThan(400);
+    expect(checked).toBeGreaterThan(1000);
   });
 
   it('з isNight: true показує, що буде вночі', () => {
@@ -276,6 +288,7 @@ describe('прогноз', () => {
 describe('детермінізм і чистота', () => {
   it('той самий seed і ті самі дії дають ту саму гру', () => {
     expect(trace(123)).toEqual(trace(123));
+    expect(trace(123, 3, expert)).toEqual(trace(123, 3, expert));
   });
 
   it('різні seed дають різні ігри', () => {
@@ -305,5 +318,114 @@ describe('детермінізм і чистота', () => {
     const s = newGame();
     const junk = [{ type: 'щось' }, { type: 'build', module: 'палац', x: 0, y: 0 }, { type: 'toggle' }, { type: 'choose' }] as unknown as Action[];
     for (const action of junk) expect(reduce(s, action)).toBe(s);
+  });
+});
+
+describe('нові модулі', () => {
+  const at = (type: PlacedModule['type'], x: number, y: number, on = true): PlacedModule => ({ id: `${type}-${x}-${y}`, type, x, y, on });
+
+  it('реактор дає енергію і вдень, і вночі, але додає радіації', () => {
+    const base = calm({ modules: [] });
+    const withReactor = calm({ modules: [at('reactor', 0, 0)] });
+    for (const isNight of [false, true]) {
+      const before = solDelta({ ...base, isNight });
+      const after = solDelta({ ...withReactor, isNight });
+      expect(after.power - before.power).toBe(5);
+      expect(after.radiation - before.radiation).toBe(2);
+    }
+  });
+
+  it('3D-принтер друкує запчастину щосола й споживає енергію', () => {
+    const s = calm({ modules: [at('printer', 0, 0)] });
+    expect(solDelta(s).parts).toBe(levelRules(1).perSol.parts! + 1);
+    expect(solDelta(s).power).toBe(-2);
+    expect(reduce(s, NEXT).parts).toBe(s.parts + 2);
+  });
+
+  it('енерговузол зменшує споживання сусідів зверху, знизу, ліворуч і праворуч', () => {
+    const consumers = [at('habitat', 3, 2), at('greenhouse', 2, 3), at('recycler', 4, 3), at('shield', 3, 4)];
+    const without = solDelta(calm({ modules: consumers })).power;
+    const withHub = solDelta(calm({ modules: [...consumers, at('hub', 3, 3)] })).power;
+    expect(withHub - without).toBe(4 * BALANCE.hubSaving);
+  });
+
+  it('енерговузол не діє по діагоналі, вимкнений і на тих, хто нічого не споживає', () => {
+    const diagonal = [at('habitat', 2, 2), at('hub', 3, 3)];
+    expect(solDelta(calm({ modules: diagonal })).power).toBe(solDelta(calm({ modules: [diagonal[0]] })).power);
+    const off = [at('habitat', 3, 2), at('hub', 3, 3, false)];
+    expect(solDelta(calm({ modules: off })).power).toBe(-2);
+    const producers = [at('solar', 3, 2), at('reactor', 2, 3), at('hub', 3, 3)];
+    expect(solDelta(calm({ modules: producers })).power).toBe(6 + 5);
+  });
+
+  it('економія не перевищує споживання модуля, а два вузли не складаються', () => {
+    // щит споживає 1: з вузлом — 0, а не «плюс»
+    expect(solDelta(calm({ modules: [at('shield', 3, 2), at('hub', 3, 3)] })).power).toBe(0);
+    // акумулятор удень заряджається за 1: з вузлом — безкоштовно; уночі він віддає заряд, і вузол тут ні до чого
+    const battery = [at('battery', 3, 2), at('hub', 3, 3)];
+    expect(solDelta(calm({ modules: battery })).power).toBe(0);
+    expect(solDelta(calm({ modules: battery, isNight: true })).power).toBe(4);
+    // житловий модуль між двома вузлами все одно заощаджує лише раз
+    const twoHubs = [at('habitat', 3, 2), at('hub', 3, 3), at('hub', 3, 1)];
+    expect(solDelta(calm({ modules: twoHubs })).power).toBe(-2 + BALANCE.hubSaving);
+  });
+
+  it('нові модулі будуються за свою ціну', () => {
+    let s = calm({ parts: 15 });
+    s = reduce(s, { type: 'build', module: 'reactor', x: 0, y: 0 });
+    s = reduce(s, { type: 'build', module: 'printer', x: 1, y: 0 });
+    s = reduce(s, { type: 'build', module: 'hub', x: 2, y: 0 });
+    expect(s.modules.slice(2).map((m) => m.type)).toEqual(['reactor', 'printer', 'hub']);
+    expect(s.parts).toBe(15 - 8 - 4 - 3);
+  });
+});
+
+describe('рівні', () => {
+  it('newGame(seed, level) бере правила рівня; невідомий рівень — перший', () => {
+    expect(newGame(1)).toMatchObject({ level: 1, maxSol: 30 });
+    expect(newGame(1, 2)).toMatchObject({ level: 2, maxSol: 30, resources: { power: 40, life: 80, food: 80 } });
+    expect(newGame(1, 3)).toMatchObject({ level: 3, maxSol: 45, parts: 12 });
+    expect(newGame(1, 99).level).toBe(1);
+    expect(newGame(1, 0).level).toBe(1);
+  });
+
+  it('стан без поля level грає за правилами першої місії', () => {
+    const { level: _, ...legacy } = newGame(4);
+    expect(solDelta(legacy)).toEqual(solDelta(newGame(4)));
+    expect(reduce(legacy, NEXT).resources).toEqual(reduce(newGame(4), NEXT).resources);
+  });
+
+  it.each([1, 2, 3])('рівень %i: ночі настають за розкладом, про них пише журнал', (level) => {
+    const rules = levelRules(level);
+    const states = trace(11, level, expert);
+    expect(states.at(-1)!.status).toBe('won');
+    expect(states.at(-1)!.sol).toBe(rules.maxSol);
+    for (const s of states) {
+      const expected = rules.nights.some(([from, to]) => s.sol >= from && s.sol <= to);
+      expect(s.isNight, `сол ${s.sol}`).toBe(expected);
+    }
+    const log = states.at(-1)!.log;
+    for (const [from, to] of rules.nights) {
+      expect(log).toContain(`Сол ${from}: настала місячна ніч.`);
+      if (to < rules.maxSol) expect(log).toContain(`Сол ${to + 1}: світанок — Сонце повернулося.`);
+    }
+  });
+
+  it('на полюсі сонячна панель дає менше, а на третьому рівні радіація росте швидше', () => {
+    const solar = (level: number) => solDelta({ ...newGame(1, level), modules: withModules('solar') }).power;
+    expect(solar(1)).toBe(6);
+    expect(solar(2)).toBe(3);
+    expect(solDelta(newGame(1, 1)).radiation).toBe(3);
+    expect(solDelta(newGame(1, 3)).radiation).toBe(5);
+  });
+
+  it('на третьому рівні спалахи частіші, на другому частіше знаходять лід', () => {
+    const total = (level: number, id: string) => {
+      let n = 0;
+      for (let seed = 1; seed <= 80; seed++) n += eventSols(trace(seed, level, expert), id).length;
+      return n / levelRules(level).maxSol;
+    };
+    expect(total(3, 'solar-flare')).toBeGreaterThan(total(1, 'solar-flare') * 1.5);
+    expect(total(2, 'crater-ice')).toBeGreaterThan(total(1, 'crater-ice') * 1.5);
   });
 });

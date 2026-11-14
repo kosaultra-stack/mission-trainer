@@ -1,4 +1,4 @@
-import type { GameState, ModuleType } from '../shared/types';
+import type { GameState, ModuleType, PlacedModule } from '../shared/types';
 import type { Delta } from './balance';
 
 /** Чисті помічники для наслідків: нічого не змінюють на місці, повертають новий стан. */
@@ -31,3 +31,7 @@ export function turnOffFirst(state: GameState, type: ModuleType): GameState {
 
 /** «+4» або «−8» — для чесних підказок у подіях. */
 export const signed = (value: number) => (value > 0 ? `+${value}` : `−${Math.abs(value)}`);
+
+/** Чи стоїть модуль упритул (зверху, знизу, ліворуч, праворуч) до ввімкненого енерговузла. */
+export const nearActiveHub = (modules: PlacedModule[], module: PlacedModule) =>
+  modules.some((hub) => hub.type === 'hub' && hub.on && Math.abs(hub.x - module.x) + Math.abs(hub.y - module.y) === 1);

@@ -42,7 +42,7 @@ export const EVENTS: EventDef[] = [
       ],
       factId: 'radiation',
     },
-    canHappen: (s) => s.sol >= BALANCE.events.flareFromSol,
+    canHappen: (s) => s.sol >= BALANCE.flareFromSol,
     effects: {
       hide: (s) => applyDelta(s, C['solar-flare'].hide),
       work: (s) => applyDelta(s, C['solar-flare'].work),
@@ -221,6 +221,56 @@ export const EVENTS: EventDef[] = [
     effects: {
       crew: (s) => applyDelta(s, C['crater-ice'].crew),
       rover: (s) => applyDelta(s, C['crater-ice'].rover),
+    },
+  },
+  {
+    event: {
+      id: 'reactor-heat',
+      title: 'Реактор перегрівається',
+      text: 'Температура в активній зоні реактора росте. На Місяці немає ні повітря, ні води, щоб швидко відвести тепло, — лише радіатори.',
+      choices: [
+        {
+          id: 'throttle',
+          label: 'Знизити потужність',
+          hint: `Радіація не зросте, але реактор недодасть: ${signed(C['reactor-heat'].throttle.power)} енергії`,
+        },
+        {
+          id: 'vent',
+          label: 'Скинути тиск назовні',
+          hint: `Енергія ціла, але назовні вийде радіоактивна пара: ${signed(C['reactor-heat'].vent.radiation)} радіації`,
+        },
+      ],
+      factId: 'power',
+    },
+    canHappen: (s) => hasActive(s, 'reactor'),
+    effects: {
+      throttle: (s) => applyDelta(s, C['reactor-heat'].throttle),
+      vent: (s) => applyDelta(s, C['reactor-heat'].vent),
+    },
+  },
+  {
+    event: {
+      id: 'printer-jam',
+      title: '3D-принтер зупинився',
+      text: 'Місячний пил забив сопло 3D-принтера, і заготовка застигла на півдорозі.',
+      choices: [
+        {
+          id: 'reheat',
+          label: 'Розігріти й прочистити сопло',
+          hint: `Принтер працює далі, але прогрів забере ${abs(C['printer-jam'].reheat.power)} енергії`,
+        },
+        {
+          id: 'stop',
+          label: 'Зупинити принтер',
+          hint: `Енергія ціла, але принтер вимкнеться, а зіпсована заготовка — це ${signed(C['printer-jam'].stop.parts)} запчастина`,
+        },
+      ],
+      factId: 'power',
+    },
+    canHappen: (s) => hasActive(s, 'printer') && s.parts >= abs(C['printer-jam'].stop.parts),
+    effects: {
+      reheat: (s) => applyDelta(s, C['printer-jam'].reheat),
+      stop: (s) => applyDelta(turnOffFirst(s, 'printer'), C['printer-jam'].stop),
     },
   },
 ];
