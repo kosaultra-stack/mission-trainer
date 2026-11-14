@@ -3,7 +3,8 @@ import type { Action, GameState, ResourceId } from '../shared/types';
 import * as sim from '../sim';
 
 export interface Engine {
-  newGame(seed?: number): GameState;
+  /** level — номер місії з src/content/levels.ts. */
+  newGame(seed?: number, level?: number): GameState;
   reduce(state: GameState, action: Action): GameState;
   forecast(state: GameState): Record<ResourceId, number>;
 }

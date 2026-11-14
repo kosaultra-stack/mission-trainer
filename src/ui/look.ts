@@ -6,7 +6,7 @@ import type { IconName } from './icons';
 export const GRID_W = 8;
 export const GRID_H = 6;
 
-export const MODULE_TYPES: ModuleType[] = ['solar', 'battery', 'habitat', 'greenhouse', 'recycler', 'shield'];
+export const MODULE_TYPES: ModuleType[] = ['solar', 'battery', 'habitat', 'greenhouse', 'recycler', 'shield', 'reactor', 'printer', 'hub'];
 
 /** Шлях до спрайта модуля з public/sprites (враховує base з vite.config). */
 export const spriteUrl = (type: ModuleType) => `${import.meta.env.BASE_URL}sprites/${type}.svg`;

@@ -82,6 +82,7 @@
   .anim-danger { animation: danger 1.6s ease-in-out infinite; }
   .anim-float { animation: float 7s ease-in-out infinite; }
   .anim-change { animation: change-pop 2.4s ease-out both; }
+  .anim-flow { animation: flow 0.9s linear infinite; }
 }
 
 @keyframes twinkle { 50% { opacity: 0.55; } }
@@ -108,6 +109,7 @@
   80% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(-6px); }
 }
+@keyframes flow { to { stroke-dashoffset: -0.22; } }
 @keyframes hold { 0% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes float { 50% { transform: translateY(-8px); } }
 

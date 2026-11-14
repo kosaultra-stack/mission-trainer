@@ -73,6 +73,20 @@ const ICONS = {
     </>
   ),
   cursor: <path d="M5 3.500 19 11l-6 1.800L11 19Z" {...line} />,
+  book: (
+    <>
+      <path d="M12 6.500C10 5 7 4.500 3.500 5v13c3.500-.5 6.500 0 8.500 1.500 2-1.500 5-2 8.500-1.500V5C17 4.500 14 5 12 6.500Z" {...line} />
+      <path d="M12 6.500v13" {...line} />
+    </>
+  ),
+  star: <path d="m12 3 2.700 5.600 6.100.8-4.500 4.200 1.100 6.100L12 16.800l-5.400 2.900 1.100-6.100-4.500-4.200 6.100-.8Z" fill="currentColor" />,
+  rewind: (
+    <>
+      <path d="M11 6.500 4.500 12l6.500 5.500Z" fill="currentColor" />
+      <path d="M19.500 6.500 13 12l6.500 5.500Z" fill="currentColor" />
+    </>
+  ),
+  link: <path d="M14 4.500h5.500V10M19.500 4.500 11 13M17 14v5.500H4.500V7H10" {...line} />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof ICONS;

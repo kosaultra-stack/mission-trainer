@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { levelInfo } from '../../content/levels';
 import { MOCK_STATES } from '../../mocks/states';
 import type { GameState } from '../../shared/types';
 import { Logo } from '../art';
@@ -54,18 +55,21 @@ interface Props {
   isDemo: boolean;
   onNextSol: () => void;
   onHelp: () => void;
+  onScience: () => void;
   onHome: () => void;
   onLoadMock: (s: GameState) => void;
 }
 
-export function TopBar({ state, canAct, isDemo, onNextSol, onHelp, onHome, onLoadMock }: Props) {
+export function TopBar({ state, canAct, isDemo, onNextSol, onHelp, onScience, onHome, onLoadMock }: Props) {
   const { sol, maxSol, isNight } = state;
+  const mission = levelInfo(state.level);
   return (
     <header className="panel relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 lg:gap-x-5 lg:px-4">
       <button onClick={onHome} title="На головну" className="flex items-center gap-2 rounded-lg">
         <Logo className="h-8 w-8" />
-        <span className="hidden text-sm font-extrabold tracking-tight text-white xl:block">
-          Mission <span className="text-orange-400">Trainer</span>
+        <span className="hidden text-left leading-tight xl:block">
+          <span className="block text-[10px] font-semibold uppercase tracking-widest text-orange-300">Місія {mission.id}</span>
+          <span className="block text-sm font-extrabold tracking-tight text-white">{mission.name}</span>
         </span>
       </button>
 
@@ -86,11 +90,19 @@ export function TopBar({ state, canAct, isDemo, onNextSol, onHelp, onHome, onLoa
       </span>
 
       <div className="order-last basis-full md:order-none md:min-w-0 md:flex-1 md:basis-0">
-        <MissionProgress sol={sol} maxSol={maxSol} isNight={isNight} />
+        <MissionProgress sol={sol} maxSol={maxSol} isNight={isNight} level={state.level} />
       </div>
 
       <div className="ml-auto flex items-center gap-2 md:ml-0">
         {isDemo && <DemoMenu onLoad={onLoadMock} />}
+        <button
+          onClick={onScience}
+          title="Наукова довідка"
+          aria-label="Наукова довідка"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-sky-300 ring-1 ring-sky-400/30 hover:bg-sky-400/15"
+        >
+          <Icon name="book" />
+        </button>
         <button
           onClick={onHelp}
           title="Як грати"

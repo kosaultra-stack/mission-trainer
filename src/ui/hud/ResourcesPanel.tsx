@@ -2,6 +2,7 @@ import type { GameState, ResourceId } from '../../shared/types';
 import type { ChangePulse } from '../changes';
 import { Icon } from '../icons';
 import { H2 } from '../look';
+import type { ScienceId } from '../science';
 import { useAnimatedNumber } from '../useAnimatedNumber';
 import { ChangeChip } from './ChangeChip';
 import { Gauge } from './Gauge';
@@ -27,17 +28,18 @@ interface Props {
   state: GameState;
   forecast: Record<ResourceId, number>;
   pulse: ChangePulse | null;
+  onWhy: (topic: ScienceId) => void;
 }
 
-export function ResourcesPanel({ state, forecast, pulse }: Props) {
+export function ResourcesPanel({ state, forecast, pulse, onWhy }: Props) {
   return (
     <section className="panel p-3" aria-label="Ресурси бази">
       <h2 className={`${H2} mb-2`}>Ресурси бази</h2>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
         {RESOURCES.map((id) => (
-          <Gauge key={id} id={id} value={state.resources[id]} delta={forecast[id]} pulse={pulse} />
+          <Gauge key={id} id={id} value={state.resources[id]} delta={forecast[id]} pulse={pulse} onWhy={() => onWhy(id)} />
         ))}
-        <Gauge id="radiation" value={state.radiation} pulse={pulse} />
+        <Gauge id="radiation" value={state.radiation} pulse={pulse} onWhy={() => onWhy('radiation')} />
       </div>
       <PartsChip parts={state.parts} pulse={pulse} className="mt-2 hidden w-full justify-center lg:inline-flex" />
     </section>
