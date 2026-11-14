@@ -11,9 +11,12 @@ import { BaseMap } from '../map/BaseMap';
 import { EndScreen } from '../overlays/EndScreen';
 import { EventModal } from '../overlays/EventModal';
 import { HowToPlay } from '../overlays/HowToPlay';
+import { ScienceModal } from '../overlays/ScienceModal';
 import { Advisor } from '../panels/Advisor';
 import { BuildPanel } from '../panels/BuildPanel';
 import { LogPanel } from '../panels/LogPanel';
+import { NightCheck } from '../panels/NightCheck';
+import type { ScienceId } from '../science';
 import { useGame } from '../useGame';
 
 const SEEN_KEY = 'mission-trainer:how-to-seen';
@@ -35,10 +38,11 @@ function rememberVisit() {
 }
 
 export function GameScreen({ onHome }: { onHome: () => void }) {
-  const { state, banner, pulse, notice, dispatch, load, restart } = useGame();
+  const { state, history, banner, pulse, notice, dispatch, load, restart, rewind } = useGame();
   const [building, setBuilding] = useState<ModuleType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(firstVisit);
+  const [science, setScience] = useState<ScienceId | null>(null);
 
   const forecast = engine.forecast(state);
   const canAct = state.status === 'playing' && state.pendingEvent === null;
@@ -92,6 +96,10 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
         if (e.key === 'Escape') closeHelp();
         return;
       }
+      if (science) {
+        if (e.key === 'Escape') setScience(null);
+        return;
+      }
       const digit = /^[1-9]$/.test(e.key) ? Number(e.key) : null;
       if (state.pendingEvent && state.status === 'playing') {
         const choice = digit ? state.pendingEvent.choices[digit - 1] : undefined;
@@ -116,6 +124,7 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
         isDemo={IS_DEMO}
         onNextSol={nextSol}
         onHelp={() => setHelpOpen(true)}
+        onScience={() => setScience('night')}
         onHome={goHome}
         onLoadMock={loadState}
       />
@@ -123,7 +132,10 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
       <div className="flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[220px_minmax(0,1fr)_280px] xl:grid-cols-[250px_minmax(0,1fr)_320px]">
         <aside className="scroll-thin contents lg:flex lg:min-h-0 lg:flex-col lg:gap-3 lg:overflow-y-auto">
           <div className="order-1 lg:order-none">
-            <ResourcesPanel state={state} forecast={forecast} pulse={pulse} />
+            <ResourcesPanel state={state} forecast={forecast} pulse={pulse} onWhy={setScience} />
+          </div>
+          <div className="order-4 lg:order-none">
+            <NightCheck state={state} onWhy={() => setScience('night')} />
           </div>
           <div className="order-4 lg:order-none">
             <Advisor advice={advice} />
@@ -166,19 +178,26 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
         </p>
       )}
 
-      {state.pendingEvent && state.status === 'playing' && !helpOpen && (
+      {state.pendingEvent && state.status === 'playing' && !helpOpen && !science && (
         <EventModal event={state.pendingEvent} onChoose={(choiceId) => dispatch({ type: 'choose', choiceId })} />
       )}
-      {state.status !== 'playing' && (
+      {state.status !== 'playing' && !science && (
         <EndScreen
           state={state}
+          history={history}
           onRestart={() => {
             clearSelection();
             restart();
           }}
           onHome={onHome}
+          onRewind={(sol) => {
+            clearSelection();
+            rewind(sol);
+          }}
+          onWhy={setScience}
         />
       )}
+      {science && <ScienceModal key={science} topic={science} onClose={() => setScience(null)} />}
       {helpOpen && <HowToPlay onClose={closeHelp} />}
     </div>
   );

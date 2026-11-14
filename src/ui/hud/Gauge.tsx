@@ -23,10 +23,12 @@ interface Props {
   delta?: number;
   /** Зміни після останньої дії — щоб на мить показати, що сталося. */
   pulse?: ChangePulse | null;
+  /** Відкрити наукову довідку про цей ресурс. */
+  onWhy?: () => void;
 }
 
 /** Шкала ресурсу 0..100 із прогнозом рушія на наступний сол. */
-export function Gauge({ id, value, delta, pulse }: Props) {
+export function Gauge({ id, value, delta, pulse, onWhy }: Props) {
   const look = GAUGE_LOOK[id];
   const shown = useAnimatedNumber(value);
   const change = pulse?.values[id] ?? 0;
@@ -47,6 +49,17 @@ export function Gauge({ id, value, delta, pulse }: Props) {
         </span>
         <span className="min-w-0 flex-1 text-xs font-medium leading-tight text-slate-300">{look.label}</span>
         {danger && <Icon name="alert" className="h-4 w-4 shrink-0 text-rose-400" />}
+        {onWhy && (
+          <button
+            onClick={onWhy}
+            title={`Чому? Наука про: ${look.label.replace('\u00AD', '').toLowerCase()}`}
+            aria-label={`Чому? ${look.label.replace('\u00AD', '')}`}
+            className="flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-[11px] font-semibold text-sky-300 ring-1 ring-sky-400/30 transition hover:bg-sky-400/15"
+          >
+            <Icon name="book" className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Чому?</span>
+          </button>
+        )}
       </div>
       <div className="mt-1.5 flex items-center gap-2">
         <span className={`min-w-8 text-xl font-bold leading-none tabular-nums ${danger ? 'text-rose-200' : 'text-slate-50'}`}>{shown}</span>

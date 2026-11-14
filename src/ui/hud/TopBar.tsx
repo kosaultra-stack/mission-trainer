@@ -54,11 +54,12 @@ interface Props {
   isDemo: boolean;
   onNextSol: () => void;
   onHelp: () => void;
+  onScience: () => void;
   onHome: () => void;
   onLoadMock: (s: GameState) => void;
 }
 
-export function TopBar({ state, canAct, isDemo, onNextSol, onHelp, onHome, onLoadMock }: Props) {
+export function TopBar({ state, canAct, isDemo, onNextSol, onHelp, onScience, onHome, onLoadMock }: Props) {
   const { sol, maxSol, isNight } = state;
   return (
     <header className="panel relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 lg:gap-x-5 lg:px-4">
@@ -91,6 +92,14 @@ export function TopBar({ state, canAct, isDemo, onNextSol, onHelp, onHome, onLoa
 
       <div className="ml-auto flex items-center gap-2 md:ml-0">
         {isDemo && <DemoMenu onLoad={onLoadMock} />}
+        <button
+          onClick={onScience}
+          title="Наукова довідка"
+          aria-label="Наукова довідка"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-sky-300 ring-1 ring-sky-400/30 hover:bg-sky-400/15"
+        >
+          <Icon name="book" />
+        </button>
         <button
           onClick={onHelp}
           title="Як грати"

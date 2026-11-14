@@ -29,3 +29,6 @@ export const isDanger = (id: GaugeId, value: number) =>
 
 /** Заголовок секції на панелі. */
 export const H2 = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400';
+
+/** Приблизна тривалість місячної ночі в солах — лише для підказок (≈14 земних діб); правила визначає рушій. */
+export const NIGHT_SOLS = 14;

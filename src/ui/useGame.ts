@@ -13,6 +13,8 @@ export interface SolBannerInfo {
 /** Тримає стан гри. Змінює його тільки через reduce() з рушія. */
 export function useGame() {
   const [state, setState] = useState<GameState>(() => engine.newGame(1));
+  /** Знімки стану на початку кожного сола — для розбору місії й повернення назад. */
+  const [history, setHistory] = useState<GameState[]>(() => [state]);
   const [banner, setBanner] = useState<SolBannerInfo | null>(null);
   const [pulse, setPulse] = useState<ChangePulse | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -27,6 +29,7 @@ export function useGame() {
       return null;
     }
     if (next.sol !== state.sol) {
+      setHistory((prev) => [...prev, next]);
       setBanner((prev) => ({
         id: (prev?.id ?? 0) + 1,
         sol: next.sol,
@@ -42,8 +45,9 @@ export function useGame() {
   };
 
   /** Завантажити готовий стан (мок або нова гра). */
-  const load = (next: GameState) => {
+  const load = (next: GameState, keepHistory: GameState[] = [next]) => {
     setState(next);
+    setHistory(keepHistory);
     setBanner(null);
     setPulse(null);
     setNotice(null);
@@ -51,5 +55,12 @@ export function useGame() {
 
   const restart = () => load(engine.newGame(Date.now() % 2147483647));
 
-  return { state, banner, pulse, notice, dispatch, load, restart };
+  /** Повернутися до початку вказаного сола й спробувати інакше. Стан бере зі знімка, нічого не перераховує. */
+  const rewind = (sol: number) => {
+    const index = history.findIndex((s) => s.sol === sol);
+    if (index < 0) return;
+    load(history[index], history.slice(0, index + 1));
+  };
+
+  return { state, history, banner, pulse, notice, dispatch, load, restart, rewind };
 }

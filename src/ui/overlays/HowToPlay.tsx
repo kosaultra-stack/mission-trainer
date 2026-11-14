@@ -53,6 +53,7 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
       </ul>
       <p className="mt-4 rounded-xl bg-sky-400/10 px-3 py-2 text-sm text-sky-200">
         <b>Цікаво:</b> на Місяці небо чорне навіть удень, бо там немає повітря, яке розсіює сонячне світло.
+        Більше справжніх фактів NASA — за кнопкою <b>«Чому?»</b> біля кожного ресурсу.
       </p>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="hidden text-xs text-slate-500 lg:block">
