@@ -13,6 +13,7 @@ export interface GameState {
   status: 'playing' | 'won' | 'lost';
   lostReason?: string;
   log: string[];
+  rng?: number;                            // стан ГПВЧ рушія (mulberry32)
 }
 export type Action =
   | { type: 'build'; module: ModuleType; x: number; y: number }
