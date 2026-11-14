@@ -1,3 +1,4 @@
+import type { LevelInfo } from '../../content/levels';
 import type { GameState } from '../../shared/types';
 import { makeDebrief } from '../debrief';
 import { Icon } from '../icons';
@@ -8,6 +9,10 @@ import { Modal, PRIMARY_BTN, SECONDARY_BTN } from './Modal';
 interface Props {
   state: GameState;
   history: GameState[];
+  mission: LevelInfo;
+  /** Наступна місія, якщо вона є. */
+  nextMission: LevelInfo | null;
+  onNextLevel: () => void;
   onRestart: () => void;
   onHome: () => void;
   onRewind: (sol: number) => void;
@@ -15,7 +20,7 @@ interface Props {
 }
 
 /** Фінал місії з розбором: що сталося, коли було найважче і що спробувати наступного разу. */
-export function EndScreen({ state, history, onRestart, onHome, onRewind, onWhy }: Props) {
+export function EndScreen({ state, history, mission, nextMission, onNextLevel, onRestart, onHome, onRewind, onWhy }: Props) {
   const won = state.status === 'won';
   const debrief = makeDebrief(history, state);
 
@@ -30,6 +35,9 @@ export function EndScreen({ state, history, onRestart, onHome, onRewind, onWhy }
           <Icon name={won ? 'flag' : 'alert'} className="h-9 w-9" />
         </span>
         <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+            Місія {mission.id} · {mission.name}
+          </p>
           <h2 className={`text-2xl font-black ${won ? 'text-emerald-300' : 'text-rose-300'}`}>{won ? 'Місію виконано!' : 'Місію провалено'}</h2>
           <p className="mt-0.5 text-slate-300">
             {won ? `База протрималася всі ${state.maxSol} солів. Екіпаж пишається своїм командиром!` : state.lostReason}
@@ -104,10 +112,21 @@ export function EndScreen({ state, history, onRestart, onHome, onRewind, onWhy }
         </div>
       )}
 
+      {won && !nextMission && (
+        <p className="mt-4 rounded-xl border border-amber-300/40 bg-amber-300/10 px-3 py-2 text-center text-sm font-semibold text-amber-100">
+          Усі три місії пройдено. Ти готовий командувати справжньою місячною базою!
+        </p>
+      )}
       <div className="mt-6 flex flex-col gap-2 sm:flex-row-reverse">
-        <button autoFocus onClick={onRestart} className={`${PRIMARY_BTN} flex-1`}>
+        {won && nextMission && (
+          <button autoFocus onClick={onNextLevel} className={`${PRIMARY_BTN} flex-[1.4]`}>
+            Місія {nextMission.id}: {nextMission.name}
+            <Icon name="play" className="h-4 w-4" />
+          </button>
+        )}
+        <button autoFocus={!(won && nextMission)} onClick={onRestart} className={`${won && nextMission ? SECONDARY_BTN : PRIMARY_BTN} flex-1`}>
           <Icon name="restart" className="h-4 w-4" />
-          {won ? 'Нова місія' : 'Почати спочатку'}
+          {won ? 'Зіграти ще раз' : 'Почати спочатку'}
         </button>
         <button onClick={onHome} className={`${SECONDARY_BTN} flex-1`}>
           <Icon name="home" className="h-4 w-4" />

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { levelInfo, LEVELS } from '../../content/levels';
 import { MODULES } from '../../content/modules';
 import type { GameState, ModuleType } from '../../shared/types';
 import { getAdvice } from '../advisor';
+import { makeDebrief } from '../debrief';
 import { engine, IS_DEMO } from '../engine';
 import { NextSolButton } from '../hud/NextSolButton';
 import { PartsChip, ResourcesPanel } from '../hud/ResourcesPanel';
@@ -16,6 +18,7 @@ import { Advisor } from '../panels/Advisor';
 import { BuildPanel } from '../panels/BuildPanel';
 import { LogPanel } from '../panels/LogPanel';
 import { NightCheck } from '../panels/NightCheck';
+import { saveResult } from '../progress';
 import type { ScienceId } from '../science';
 import { useGame } from '../useGame';
 
@@ -37,8 +40,15 @@ function rememberVisit() {
   }
 }
 
-export function GameScreen({ onHome }: { onHome: () => void }) {
-  const { state, history, banner, pulse, notice, dispatch, load, restart, rewind } = useGame();
+interface Props {
+  /** Номер місії з src/content/levels.ts. */
+  level: number;
+  onHome: () => void;
+  onNextLevel: (level: number) => void;
+}
+
+export function GameScreen({ level, onHome, onNextLevel }: Props) {
+  const { state, history, banner, pulse, notice, dispatch, load, restart, rewind } = useGame(level);
   const [building, setBuilding] = useState<ModuleType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(firstVisit);
@@ -47,6 +57,16 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
   const forecast = engine.forecast(state);
   const canAct = state.status === 'playing' && state.pendingEvent === null;
   const advice = getAdvice(state, forecast, building);
+  const mission = levelInfo(level);
+  const nextMission = LEVELS.find((l) => l.id === level + 1) ?? null;
+
+  // Щойно місія закінчилася — запам'ятовуємо результат, щоб показати його на заставці.
+  const finished = state.status !== 'playing';
+  useEffect(() => {
+    if (!finished || IS_DEMO) return;
+    saveResult(level, { won: state.status === 'won', stars: makeDebrief(history, state).stars });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- зберігаємо один раз у мить завершення
+  }, [finished]);
 
   const clearSelection = () => {
     setBuilding(null);
@@ -135,10 +155,10 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
             <ResourcesPanel state={state} forecast={forecast} pulse={pulse} onWhy={setScience} />
           </div>
           <div className="order-4 lg:order-none">
-            <NightCheck state={state} onWhy={() => setScience('night')} />
+            <Advisor advice={advice} />
           </div>
           <div className="order-4 lg:order-none">
-            <Advisor advice={advice} />
+            <NightCheck state={state} onWhy={() => setScience('night')} />
           </div>
         </aside>
 
@@ -185,6 +205,9 @@ export function GameScreen({ onHome }: { onHome: () => void }) {
         <EndScreen
           state={state}
           history={history}
+          mission={mission}
+          nextMission={nextMission}
+          onNextLevel={() => nextMission && onNextLevel(nextMission.id)}
           onRestart={() => {
             clearSelection();
             restart();

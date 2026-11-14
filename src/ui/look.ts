@@ -6,7 +6,7 @@ import type { IconName } from './icons';
 export const GRID_W = 8;
 export const GRID_H = 6;
 
-export const MODULE_TYPES: ModuleType[] = ['solar', 'battery', 'habitat', 'greenhouse', 'recycler', 'shield'];
+export const MODULE_TYPES: ModuleType[] = ['solar', 'battery', 'habitat', 'greenhouse', 'recycler', 'shield', 'reactor', 'printer', 'hub'];
 
 /** Шлях до спрайта модуля з public/sprites (враховує base з vite.config). */
 export const spriteUrl = (type: ModuleType) => `${import.meta.env.BASE_URL}sprites/${type}.svg`;
@@ -29,6 +29,3 @@ export const isDanger = (id: GaugeId, value: number) =>
 
 /** Заголовок секції на панелі. */
 export const H2 = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400';
-
-/** Приблизна тривалість місячної ночі в солах — лише для підказок (≈14 земних діб); правила визначає рушій. */
-export const NIGHT_SOLS = 14;

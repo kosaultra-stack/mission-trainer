@@ -2,7 +2,7 @@ import { Icon, type IconName } from '../icons';
 import { Modal, PRIMARY_BTN } from './Modal';
 
 const STEPS: { icon: IconName; tone: string; title: string; text: string }[] = [
-  { icon: 'flag', tone: 'bg-orange-400/15 text-orange-300', title: 'Мета', text: 'Протримайся 30 солів. Сол — це одна доба на базі.' },
+  { icon: 'flag', tone: 'bg-orange-400/15 text-orange-300', title: 'Мета', text: 'Протримайся до кінця місії. Сол — це одна доба на базі. Місій три, і кожна наступна складніша.' },
   {
     icon: 'bolt',
     tone: 'bg-amber-400/15 text-amber-300',
@@ -19,7 +19,7 @@ const STEPS: { icon: IconName; tone: string; title: string; text: string }[] = [
     icon: 'nut',
     tone: 'bg-slate-400/15 text-slate-200',
     title: 'Будівництво',
-    text: 'Обери модуль на панелі й клацни вільну ділянку на мапі. Кожен модуль коштує запчастин.',
+    text: 'Обери модуль на панелі й клацни вільну ділянку на мапі. Місце має значення: поруч з енерговузлом модулі споживають менше.',
   },
   {
     icon: 'power',
@@ -57,7 +57,7 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
       </p>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="hidden text-xs text-slate-500 lg:block">
-          Клавіші: <kbd className="rounded bg-slate-800 px-1">1</kbd>–<kbd className="rounded bg-slate-800 px-1">6</kbd> — модуль,{' '}
+          Клавіші: <kbd className="rounded bg-slate-800 px-1">1</kbd>–<kbd className="rounded bg-slate-800 px-1">9</kbd> — модуль,{' '}
           <kbd className="rounded bg-slate-800 px-1">N</kbd> — наступний сол, <kbd className="rounded bg-slate-800 px-1">Esc</kbd> — скасувати
         </p>
         <button autoFocus onClick={onClose} className={`${PRIMARY_BTN} w-full sm:ml-auto sm:w-auto`}>

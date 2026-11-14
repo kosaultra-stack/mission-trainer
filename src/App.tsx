@@ -6,7 +6,16 @@ import { TitleScreen } from './ui/screens/TitleScreen';
 
 export default function App() {
   const [screen, setScreen] = useState<'title' | 'game'>('title');
+  const [level, setLevel] = useState(1);
+  /** Номер запуску: нова гра щоразу отримує свіжий екран, навіть якщо місія та сама. */
+  const [run, setRun] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
+
+  const start = (id: number) => {
+    setLevel(id);
+    setRun((n) => n + 1);
+    setScreen('game');
+  };
 
   return (
     <div className="relative min-h-dvh overflow-x-hidden bg-slate-950 text-slate-100">
@@ -15,9 +24,9 @@ export default function App() {
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(30,41,59,.7),transparent_65%)]" aria-hidden />
 
       {screen === 'title' ? (
-        <TitleScreen isDemo={IS_DEMO} onStart={() => setScreen('game')} onHelp={() => setHelpOpen(true)} />
+        <TitleScreen isDemo={IS_DEMO} initialLevel={level} onStart={start} onHelp={() => setHelpOpen(true)} />
       ) : (
-        <GameScreen onHome={() => setScreen('title')} />
+        <GameScreen key={run} level={level} onHome={() => setScreen('title')} onNextLevel={start} />
       )}
       {helpOpen && <HowToPlay onClose={() => setHelpOpen(false)} />}
     </div>
