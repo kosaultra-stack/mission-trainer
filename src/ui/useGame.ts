@@ -10,9 +10,12 @@ export interface SolBannerInfo {
   phaseChanged: boolean;
 }
 
+/** Seed для нової гри: щоразу інший, тож події в кожній місії свої. */
+const freshSeed = () => Date.now() % 2147483647;
+
 /** Тримає стан гри. Змінює його тільки через reduce() з рушія. */
 export function useGame() {
-  const [state, setState] = useState<GameState>(() => engine.newGame(1));
+  const [state, setState] = useState<GameState>(() => engine.newGame(freshSeed()));
   const [banner, setBanner] = useState<SolBannerInfo | null>(null);
   const [pulse, setPulse] = useState<ChangePulse | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export function useGame() {
     setNotice(null);
   };
 
-  const restart = () => load(engine.newGame(Date.now() % 2147483647));
+  const restart = () => load(engine.newGame(freshSeed()));
 
   return { state, banner, pulse, notice, dispatch, load, restart };
 }
